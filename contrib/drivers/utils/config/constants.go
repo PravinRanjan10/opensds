@@ -25,6 +25,7 @@ const (
 	CinderDriverType               = "cinder"
 	CephDriverType                 = "ceph"
 	LVMDriverType                  = "lvm"
+	IBMDriverType                  = "ibm"
 	HuaweiOceanStorBlockDriverType = "huawei_oceanstor_block"
 	HuaweiFusionStorageDriverType  = "huawei_fusionstorage"
 	HuaweiOceanStorFileDriverType  = "huawei_oceanstor_file"

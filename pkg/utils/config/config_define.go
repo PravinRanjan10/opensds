@@ -91,6 +91,7 @@ type Backends struct {
 	Cinder               BackendProperties `conf:"cinder"`
 	Sample               BackendProperties `conf:"sample"`
 	LVM                  BackendProperties `conf:"lvm"`
+	IBM                  BackendProperties `conf:"ibm"`
 	HuaweiOceanStorBlock BackendProperties `conf:"huawei_oceanstor_block"`
 	HuaweiFusionStorage  BackendProperties `conf:"huawei_fusionstorage"`
 	HuaweiOceanStorFile  BackendProperties `conf:"huawei_oceanstor_file"`
