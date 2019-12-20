@@ -54,11 +54,9 @@ type Cli struct {
 
 func login() (error) {
 	stdout, stderr, done, err := Executer().Run("uname", 10*time.Second)
-	glog.Infof("The command stdout output is to just verify connection. system is %v", stdout)
-	glog.Infof("The command stderr output is %v", stderr)
-	glog.Infof("The command done output is %v", done)
+	glog.Infof("stdout:%v stderr:%v done:%v", stdout, stderr, done)
 	if err!=nil{
-		glog.Infof("The command done output is %v", err)
+	    return err
 	}
 	return nil
 }
@@ -77,16 +75,14 @@ func (c *Cli) execute(cmd ...string) (string, error) {
 func (c *Cli) GetSpectrumScaleStatus() error {
 	createCmd := "mmgetstate"
 	stdout, stderr, done, err := Executer().Run(createCmd, 10*time.Second)
-	glog.Infof("The command stdout output is %v", stdout)
-	glog.Infof("The command stderr output is %v", stderr)
-	glog.Infof("The command done output is %v", done)
+  glog.Infof("stdout:%v stderr:%v done:%v", stdout, stderr, done)
 	if err != nil {
-		return err
+	    return err
 	}
 	lines := strings.Split(stdout, "\n")
 	var bool = strings.Contains(lines[2], "active")
 	if bool != true{
-		return err
+	    return err
 	}
 	return nil
 }
@@ -94,17 +90,15 @@ func (c *Cli) GetSpectrumScaleStatus() error {
 func (c *Cli) GetSpectrumScaleMountPoint() (string, error) {
 	createCmd := "mmlsfs all -T"
 	stdout, stderr, done, err := Executer().Run(createCmd, 10*time.Second)
-	glog.Infof("The command mmlsfs stdout output is %v", stdout)
-	glog.Infof("The command mmlsfs stderr output is %v", stderr)
-	glog.Infof("The command mmlsfs done output is %v", done)
+	glog.Infof("stdout:%v stderr:%v done:%v", stdout, stderr, done)
 	if err != nil {
-		return "", err
+	    return "", err
 	}
 	var mountPoint string
 	lines := strings.Split(stdout, "\n")
 	for _, line := range lines {
 		if strings.Contains(line, "-T") != true {
-			continue
+		    continue
 		}
 		field := strings.Fields(line)
 		mountPoint = field[1]
@@ -115,28 +109,22 @@ func (c *Cli) GetSpectrumScaleMountPoint() (string, error) {
 func (c *Cli) CreateVolume(name string, size string) error {
 	createCmd := "mmcrfileset" + " " + "fs1" + " " + name + " " + "--inode-space" + " " + "new"
 	stdout, stderr, done, err := Executer().Run(createCmd, 10*time.Second)
-	glog.Infof("The command mmcrfileset stdout output is %v", stdout)
-	glog.Infof("The command mmcrfileset stderr output is %v", stderr)
-	glog.Infof("The command mmcrfileset done output is %v", done)
+	glog.Infof("stdout:%v stderr:%v done:%v", stdout, stderr, done)
 	if err != nil {
-		return err
+	    return err
 	}
 	linkCmd := "mmlinkfileset" + " " + "fs1" + " " + name + " " + "-J /gpfs/fs1/" + name
 	stdout, stderr, done, err = Executer().Run(linkCmd, 10*time.Second)
-	glog.Infof("The command mmlinkfileset stdout output is %v", stdout)
-	glog.Infof("The command mmlinkfileset stderr output is %v", stderr)
-	glog.Infof("The command mmlinkfileset done output is %v", done)
+	glog.Infof("stdout:%v stderr:%v done:%v", stdout, stderr, done)
 	if err != nil {
-		return err
+	    return err
 	}
-   //mmsetquota fs1:vol8 --block 1G:2G --files 10K:11K
+        //mmsetquota fs1:vol8 --block 1G:2G --files 10K:11K
 	quotaCmd := "mmsetquota" + " " + "fs1" + ":" + name + " --block" + " " + size + "G" + ":" + size + "G"
 	stdout, stderr, done, err = Executer().Run(quotaCmd, 10*time.Second)
-	glog.Infof("The command mmsetquota stderr output is %v", stdout)
-	glog.Infof("The command mmsetquota stderr output is %v", stderr)
-	glog.Infof("The command mmsetquota done output is %v", done)
+	glog.Infof("stdout:%v stderr:%v done:%v", stdout, stderr, done)
 	if err != nil {
-		return err
+	    return err
 	}
 	return err
 }
@@ -145,20 +133,16 @@ func (c *Cli) CreateVolume(name string, size string) error {
 func (c *Cli) Delete(name string) error {
 	unlinkCmd := "mmunlinkfileset" + " " + "fs1" + " " + name
 	stdout, stderr, done, err := Executer().Run(unlinkCmd, 10*time.Second)
-	glog.Infof("The command mmunlinkfileset stdout output is %v", stdout)
-	glog.Infof("The command mmunlinkfileset stderr output is %v", stderr)
-	glog.Infof("The command mmunlinkfileset done output is %v", done)
+	glog.Infof("stdout:%v stderr:%v done:%v", stdout, stderr, done)
 	if err != nil {
-		return err
+	    return err
 	}
 
 	delCmd := "mmdelfileset" + " " + "fs1" + " " + name + " " + "-f"
 	stdout, stderr, done, err = Executer().Run(delCmd, 10*time.Second)
-	glog.Infof("The command mmdelfileset stdout output is %v", stdout)
-	glog.Infof("The command mmdelfileset stderr output is %v", stderr)
-	glog.Infof("the command mmdelfileset done output is %v", done)
+	glog.Infof("stdout:%v stderr:%v done:%v", stdout, stderr, done)
 	if err != nil {
-		return err
+	    return err
 	}
 	return nil
 }
@@ -167,11 +151,9 @@ func (c *Cli) ExtendVolume(name string, newSize string) error {
 	quotaCmd := "mmsetquota" + " " + "fs1" + ":" + name + " --block" + " " + newSize + "G" + ":" + newSize + "G"
 	fmt.Println("setquota:",quotaCmd)
 	stdout, stderr, done, err := Executer().Run(quotaCmd, 10*time.Second)
-	glog.Infof("The command mmsetquota stderr output is %v", stdout)
-	glog.Infof("The command mmsetquota stderr output is %v", stderr)
-	glog.Infof("The command mmsetquota done output is %v", done)
+	glog.Infof("stdout:%v stderr:%v done:%v", stdout, stderr, done)
 	if err != nil {
-		return err
+	    return err
 	}
 	return nil
 }
@@ -179,11 +161,9 @@ func (c *Cli) ExtendVolume(name string, newSize string) error {
 func (c *Cli) CreateSnapshot(snapName, volName string) error {
 	cmd := "mmcrsnapshot" + " " + "fs1" + " " + snapName +  " " + "-j" + " " + volName
 	stdout, stderr, done, err := Executer().Run(cmd, 10*time.Second)
-	glog.Infof("The command mmcrsnapshot stdout output is %v", stdout)
-	glog.Infof("The command mmcrsnapshot stderr output is %v", stderr)
-	glog.Infof("The command mmcrsnapshot done output is %v", done)
+	glog.Infof("stdout:%v stderr:%v done:%v", stdout, stderr, done)
 	if err != nil {
-		return err
+	    return err
 	}
   return nil
 }
@@ -191,11 +171,9 @@ func (c *Cli) CreateSnapshot(snapName, volName string) error {
 func (c *Cli) DeleteSnapshot(volName, snapName string) error {
 	cmd := "mmdelsnapshot" + " " + "fs1" + " " + volName + ":" + snapName
 	stdout, stderr, done, err := Executer().Run(cmd, 10*time.Second)
-	glog.Infof("The command mmdelsnapshot stdout output is %v", stdout)
-	glog.Infof("The command mmdelsnapshot stderr output is %v", stderr)
-	glog.Infof("The command mmdelsnapshot done output is %v", done)
+	glog.Infof("stdout:%v stderr:%v done:%v", stdout, stderr, done)
 	if err != nil {
-		return err
+	    return err
 	}
   return nil
 }
@@ -207,27 +185,29 @@ type Pools struct {
 	UUID          string
 }
 
-func (c *Cli) ListPools() (*[]Pools, error) {
+func (c *Cli) ListPools(mountPoint string) (*[]Pools, error) {
 	// this function is for discover all the pool from spectrumscale cluster
-	cmd := "mmlspool" + " " + "/dev/fs1"
+	field := strings.Split(mountPoint, "/")
+        length := len(field)
+	filesystem := field[length-1]
+	cmd := "mmlspool" + " " + filesystem
 	stdout, stderr, done, err := Executer().Run(cmd, 10*time.Second)
-	glog.Infof("The command mmlspool stderr output is %v", stderr)
-	glog.Infof("The command mmlspool done output is %v", done)
+	glog.Infof("stdout:%v stderr:%v done:%v", stdout, stderr, done)
 	if err != nil {
-		return nil, err
+	    return nil, err
 	}
 	lines := strings.Split(stdout, "\n")
 	var pols []Pools
 	for _, line := range lines {
 		if len(line) == 0 {
-			continue
+		    continue
 		}
 		fields := strings.Fields(line)
 		if fields[0] == "Storage" {
-			continue
+		    continue
 		}
 		if fields[0] == "Name" {
-			continue
+		    continue
 		}
 
 		total, _ := strconv.ParseFloat(fields[6], 64)
