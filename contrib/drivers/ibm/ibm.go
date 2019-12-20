@@ -65,12 +65,12 @@ type Driver struct {
 }
 
 func (d *Driver) Setup() error {
-	// Read lvm config file
+	// Read ibm config file
 	d.conf = &IBMConfig{TgtBindIp: defaultTgtBindIp,
-		                  TgtConfDir: defaultTgtConfDir,
-											UserName: username,
-											Port: port,
-											Password: password,
+		            TgtConfDir: defaultTgtConfDir,
+		            UserName: username,
+             		    Port: port,
+			    Password: password,
 	}
 	p := config.CONF.OsdsDock.Backends.IBM.ConfigPath
 	if "" == p {
