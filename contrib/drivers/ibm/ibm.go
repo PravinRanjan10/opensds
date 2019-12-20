@@ -66,11 +66,12 @@ type Driver struct {
 
 func (d *Driver) Setup() error {
 	// Read ibm config file
-	d.conf = &IBMConfig{TgtBindIp: defaultTgtBindIp,
-		            TgtConfDir: defaultTgtConfDir,
-		            UserName: username,
-             		    Port: port,
-			    Password: password,
+	d.conf = &IBMConfig{
+		 TgtBindIp: defaultTgtBindIp,
+		 TgtConfDir: defaultTgtConfDir,
+		 UserName: username,
+             	 Port: port,
+                 Password: password,
 	}
 	p := config.CONF.OsdsDock.Backends.IBM.ConfigPath
 	if "" == p {
@@ -89,8 +90,8 @@ func (d *Driver) Setup() error {
 
 func (*Driver) Unset() error { return nil }
 
+// first get the status of spectrumstate. If it is not active just return
 func (d *Driver) CreateVolume(opt *pb.CreateVolumeOpts) (vol *model.VolumeSpec, err error) {
-	   // first get the status of spectrumstate. If it is not active just return
 		 err = d.cli.GetSpectrumScaleStatus()
 		 if err != nil{
 			 log.Error("the GPFS cluster is not active")
@@ -102,10 +103,10 @@ func (d *Driver) CreateVolume(opt *pb.CreateVolumeOpts) (vol *model.VolumeSpec, 
 		 var volSize = opt.GetSize()
 		 size := strconv.FormatInt(int64(volSize), 10)
 		 if err = d.cli.CreateVolume(volName, size); err != nil {
-	 		return
+	 		return &model.VolumeSpec{}, err
 	 	}
 
-    var mountPoint string
+                var mountPoint string
 		mountPoint, err = d.cli.GetSpectrumScaleMountPoint()
 
 		if err != nil{
@@ -129,8 +130,8 @@ func (d *Driver) CreateVolume(opt *pb.CreateVolumeOpts) (vol *model.VolumeSpec, 
 		}, nil
 }
 
+// discover the pool from spectrumscale
 func (d *Driver) ListPools() ([]*model.StoragePoolSpec, error) {
-	// discover the pool from spectrumscale
 	var mountPoint string
 	mountPoint, stderr := d.cli.GetSpectrumScaleMountPoint()
 	if stderr != nil {
@@ -164,9 +165,9 @@ func (d *Driver) ListPools() ([]*model.StoragePoolSpec, error) {
 	return pols, nil
 }
 
+// this function is for deleting the spectrumscale volume(fileset)
 func (d *Driver) DeleteVolume(opt *pb.DeleteVolumeOpts) error{
-  // this function is for deleting the spectrumscale volume(fileset)
-  fileSetPath:= opt.GetMetadata()[FileSetPath]
+        fileSetPath:= opt.GetMetadata()[FileSetPath]
 	field := strings.Split(fileSetPath, "/")
 	name := field[3]
 	if err := d.cli.Delete(name); err != nil {
@@ -174,11 +175,11 @@ func (d *Driver) DeleteVolume(opt *pb.DeleteVolumeOpts) error{
 		return err
 	}
 	log.Info("volume is successfully deleted!")
-  return nil
+        return nil
 }
 
+// this function is for extending the volume(fileset). It sets the quota for block and files
 func (d *Driver) ExtendVolume(opt *pb.ExtendVolumeOpts) (*model.VolumeSpec, error) {
-	// this function is for extending the volume(fileset). It sets the quota for block and files
 	fileSetPath:= opt.GetMetadata()[FileSetPath]
 	field := strings.Split(fileSetPath, "/")
 	name := field[3]
@@ -199,8 +200,8 @@ func (d *Driver) ExtendVolume(opt *pb.ExtendVolumeOpts) (*model.VolumeSpec, erro
 	}, nil
 }
 
+// this function is for creating the snapshot of spectrumscale volume(fileset)
 func (d *Driver) CreateSnapshot(opt *pb.CreateVolumeSnapshotOpts) (*model.VolumeSnapshotSpec, error) {
-	// this function is for creating the snapshot of spectrumscale volume(fileset)
 	fileSetPath:= opt.GetMetadata()[FileSetPath]
 	field := strings.Split(fileSetPath, "/")
 	volName := field[3]
@@ -218,14 +219,14 @@ func (d *Driver) CreateSnapshot(opt *pb.CreateVolumeSnapshotOpts) (*model.Volume
 		Description: opt.GetDescription(),
 		VolumeId:    opt.GetVolumeId(),
 		Metadata:    map[string]string{
-			FileSetPath: "/gpfs/fs1/" + volName,
+			FileSetPath: fileSetPath,
 			SnapshotName: snapName,
 		},
 	}, nil
 }
 
+// this function is for deleting the snapshot
 func (d *Driver) DeleteSnapshot(opt *pb.DeleteVolumeSnapshotOpts) error{
-	// this function is for deleting the snapshot
 	fileSetPath:= opt.GetMetadata()[FileSetPath]
 	field := strings.Split(fileSetPath, "/")
 	volName := field[3]

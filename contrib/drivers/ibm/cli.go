@@ -72,10 +72,11 @@ func (c *Cli) execute(cmd ...string) (string, error) {
 	return c.RootExecuter.Run(cmd[0], cmd[1:]...)
 }
 
+// get the spectrumscale cluster status
 func (c *Cli) GetSpectrumScaleStatus() error {
 	createCmd := "mmgetstate"
 	stdout, stderr, done, err := Executer().Run(createCmd, 10*time.Second)
-  glog.Infof("stdout:%v stderr:%v done:%v", stdout, stderr, done)
+        glog.Infof("stdout:%v stderr:%v done:%v", stdout, stderr, done)
 	if err != nil {
 	    return err
 	}
@@ -87,6 +88,7 @@ func (c *Cli) GetSpectrumScaleStatus() error {
 	return nil
 }
 
+// get spectrumscale mount point
 func (c *Cli) GetSpectrumScaleMountPoint() (string, error) {
 	createCmd := "mmlsfs all -T"
 	stdout, stderr, done, err := Executer().Run(createCmd, 10*time.Second)
@@ -106,6 +108,7 @@ func (c *Cli) GetSpectrumScaleMountPoint() (string, error) {
 	return mountPoint, nil
 }
 
+// create volume
 func (c *Cli) CreateVolume(name string, size string) error {
 	createCmd := "mmcrfileset" + " " + "fs1" + " " + name + " " + "--inode-space" + " " + "new"
 	stdout, stderr, done, err := Executer().Run(createCmd, 10*time.Second)
@@ -129,7 +132,7 @@ func (c *Cli) CreateVolume(name string, size string) error {
 	return err
 }
 
-// delete volume or snapshot
+// delete volume
 func (c *Cli) Delete(name string) error {
 	unlinkCmd := "mmunlinkfileset" + " " + "fs1" + " " + name
 	stdout, stderr, done, err := Executer().Run(unlinkCmd, 10*time.Second)
@@ -147,6 +150,7 @@ func (c *Cli) Delete(name string) error {
 	return nil
 }
 
+// this is function for extending the volume size
 func (c *Cli) ExtendVolume(name string, newSize string) error {
 	quotaCmd := "mmsetquota" + " " + "fs1" + ":" + name + " --block" + " " + newSize + "G" + ":" + newSize + "G"
 	fmt.Println("setquota:",quotaCmd)
@@ -158,6 +162,7 @@ func (c *Cli) ExtendVolume(name string, newSize string) error {
 	return nil
 }
 
+// this is function for creating the snapshot
 func (c *Cli) CreateSnapshot(snapName, volName string) error {
 	cmd := "mmcrsnapshot" + " " + "fs1" + " " + snapName +  " " + "-j" + " " + volName
 	stdout, stderr, done, err := Executer().Run(cmd, 10*time.Second)
@@ -168,6 +173,7 @@ func (c *Cli) CreateSnapshot(snapName, volName string) error {
   return nil
 }
 
+// this is function for deleting the snapshot
 func (c *Cli) DeleteSnapshot(volName, snapName string) error {
 	cmd := "mmdelsnapshot" + " " + "fs1" + " " + volName + ":" + snapName
 	stdout, stderr, done, err := Executer().Run(cmd, 10*time.Second)
@@ -185,8 +191,8 @@ type Pools struct {
 	UUID          string
 }
 
+// this function is for discover all the pool from spectrumscale cluster
 func (c *Cli) ListPools(mountPoint string) (*[]Pools, error) {
-	// this function is for discover all the pool from spectrumscale cluster
 	field := strings.Split(mountPoint, "/")
         length := len(field)
 	filesystem := field[length-1]
