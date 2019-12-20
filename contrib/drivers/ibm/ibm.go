@@ -93,7 +93,7 @@ func (d *Driver) CreateVolume(opt *pb.CreateVolumeOpts) (vol *model.VolumeSpec, 
 	   // first get the status of spectrumstate. If it is not active just return
 		 err = d.cli.GetSpectrumScaleStatus()
 		 if err != nil{
-			 log.Error("The GPFS cluster is not active")
+			 log.Error("the GPFS cluster is not active")
 			 return &model.VolumeSpec{}, err
 		 }
 		 // if spectrumscale service is active, create volume(fileset)
@@ -109,7 +109,7 @@ func (d *Driver) CreateVolume(opt *pb.CreateVolumeOpts) (vol *model.VolumeSpec, 
 		mountPoint, err = d.cli.GetSpectrumScaleMountPoint()
 
 		if err != nil{
-			log.Error("Not able to find spectrumscale mount point")
+			log.Error("not able to find spectrumscale mount point")
 			return &model.VolumeSpec{}, err
 		}
 
@@ -131,7 +131,13 @@ func (d *Driver) CreateVolume(opt *pb.CreateVolumeOpts) (vol *model.VolumeSpec, 
 
 func (d *Driver) ListPools() ([]*model.StoragePoolSpec, error) {
 	// discover the pool from spectrumscale
-	pools, err := d.cli.ListPools()
+	var mountPoint string
+	mountPoint, stderr := d.cli.GetSpectrumScaleMountPoint()
+	if stderr != nil {
+		return nil, stderr
+	}
+
+	pools, err := d.cli.ListPools(mountPoint)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +170,7 @@ func (d *Driver) DeleteVolume(opt *pb.DeleteVolumeOpts) error{
 	field := strings.Split(fileSetPath, "/")
 	name := field[3]
 	if err := d.cli.Delete(name); err != nil {
-		log.Error("Failed to remove logic volume:", err)
+		log.Error("failed to remove logic volume:", err)
 		return err
 	}
 	log.Info("volume is successfully deleted!")
@@ -179,7 +185,7 @@ func (d *Driver) ExtendVolume(opt *pb.ExtendVolumeOpts) (*model.VolumeSpec, erro
 	var volsize = opt.GetSize()
 	size := strconv.FormatInt(int64(volsize), 10)
 	if err := d.cli.ExtendVolume(name, size); err != nil {
-		log.Error("Failed to extend the volume:", err)
+		log.Error("failed to extend the volume:", err)
 		return nil, err
 	}
 	return &model.VolumeSpec{
@@ -200,7 +206,7 @@ func (d *Driver) CreateSnapshot(opt *pb.CreateVolumeSnapshotOpts) (*model.Volume
 	volName := field[3]
 	var snapName = opt.GetName()
 	if err := d.cli.CreateSnapshot(snapName, volName); err != nil {
-		log.Error("Failed to create snapshot for volume:", err)
+		log.Error("failed to create snapshot for volume:", err)
 		return nil, err
 	}
 	return &model.VolumeSnapshotSpec{
@@ -225,7 +231,7 @@ func (d *Driver) DeleteSnapshot(opt *pb.DeleteVolumeSnapshotOpts) error{
 	volName := field[3]
 	snapName := opt.GetMetadata()[SnapshotName]
 	if err := d.cli.DeleteSnapshot(volName, snapName); err != nil {
-		log.Error("Failed to delete the snapshot:", err)
+		log.Error("failed to delete the snapshot:", err)
 		return err
 	}
 		return nil
