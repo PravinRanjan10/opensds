@@ -25,6 +25,10 @@ import (
 // FakeDbClient
 type FakeDbClient struct{}
 
+func (fc *FakeDbClient) CreateCsiVolume(ctx *c.Context, vol *model.CsiVolumeSpec) (*model.CsiVolumeSpec, error) {
+	panic("implement me")
+}
+
 // NewFakeDbClient
 func NewFakeDbClient() *FakeDbClient {
 	return &FakeDbClient{}

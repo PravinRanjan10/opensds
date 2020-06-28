@@ -336,6 +336,44 @@ func DeleteFileShareSnapshotDBEntry(ctx *c.Context, in *model.FileShareSnapshotS
 	return nil
 }
 
+func CreateCsiVolumeDBEntry(ctx *c.Context, in *model.CsiVolumeSpec) (*model.CsiVolumeSpec, error) {
+	if in.Id == "" {
+		//in.Id = uuid.NewV4().String()
+		in.Id = "4a33e3fb-d3de-4faa-a192-8b29c0f67846"
+	}
+	if in.Name == "" {
+		errMsg := "empty volume name is not allowed. Please give valid name"
+		log.Error(errMsg)
+		return nil, errors.New(errMsg)
+	}
+	if len(in.Name) > 255 {
+		errMsg := fmt.Sprintf("volume name length should not more than 255 characters. current length is : %d", len(in.Name))
+		log.Error(errMsg)
+		return nil, errors.New(errMsg)
+	}
+	reg, err := regexp.Compile("^[a-zA-Z0-9 _-]+$")
+	if err != nil {
+		errMsg := fmt.Sprintf("regex compilation for volume name validation failed")
+		log.Error(errMsg)
+		return nil, errors.New(errMsg)
+	}
+	if reg.MatchString(in.Name) == false {
+		errMsg := fmt.Sprintf("invalid volume name, it should only contain english char and number  : %v", in.Name)
+		log.Error(errMsg)
+		return nil, errors.New(errMsg)
+	}
+
+
+	if in.CreatedAt == "" {
+		in.CreatedAt = time.Now().Format(constants.TimeFormat)
+	}
+
+	//in.UserId = ctx.UserId
+	//in.Status = model.VolumeCreating
+	// Store the volume data into database.
+	return db.C.CreateCsiVolume(ctx, in)
+}
+
 func CreateVolumeDBEntry(ctx *c.Context, in *model.VolumeSpec) (*model.VolumeSpec, error) {
 	if in.Id == "" {
 		in.Id = uuid.NewV4().String()

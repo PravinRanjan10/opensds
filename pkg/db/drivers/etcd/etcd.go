@@ -93,6 +93,33 @@ type Client struct {
 	clientInterface
 }
 
+func (c *Client) CreateCsiVolume(ctx *c.Context, vol *model.CsiVolumeSpec) (*model.CsiVolumeSpec, error) {
+	//profiles, err := c.ListProfiles(ctx)
+	//if err != nil {
+	//	return nil, err
+	//} else if len(profiles) == 0 {
+	//	return nil, errors.New("No profile in db.")
+	//}
+
+	//vol.TenantId = ctx.TenantId
+	volBody, err := json.Marshal(vol)
+	if err != nil {
+		return nil, err
+	}
+
+	dbReq := &Request{
+		Url:     urls.GenerateVolumeURL(urls.Etcd, ctx.TenantId, vol.Id),
+		Content: string(volBody),
+	}
+	dbRes := c.Create(dbReq)
+	if dbRes.Status != "Success" {
+		log.Error("When create volume in db:", dbRes.Error)
+		return nil, errors.New(dbRes.Error)
+	}
+
+	return vol, nil
+}
+
 //Parameter
 type Parameter struct {
 	beginIdx, endIdx int

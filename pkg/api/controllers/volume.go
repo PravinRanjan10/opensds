@@ -23,12 +23,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	//"github.com/sodafoundation/api/pkg/model/csi"
 
 	log "github.com/golang/glog"
+	"github.com/sodafoundation/api/pkg/api/controllerclient"
 	"github.com/sodafoundation/api/pkg/api/policy"
 	"github.com/sodafoundation/api/pkg/api/util"
 	c "github.com/sodafoundation/api/pkg/context"
-	"github.com/sodafoundation/api/pkg/api/controllerclient"
 	"github.com/sodafoundation/api/pkg/db"
 	"github.com/sodafoundation/api/pkg/model"
 	pb "github.com/sodafoundation/api/pkg/model/proto"
@@ -47,49 +48,29 @@ type VolumePortal struct {
 	CtrClient client.Client
 }
 
+
 func (v *VolumePortal) CreateVolume() {
 	if !policy.Authorize(v.Ctx, "volume:create") {
 		return
 	}
 	ctx := c.GetContext(v.Ctx)
-	var volume = model.VolumeSpec{
+	var volume = model.CsiVolumeSpec{
 		BaseModel: &model.BaseModel{},
 	}
-
+	log.Info("API CODE v.Ctx.INput--==:",v.Ctx.Input)
+	log.Info("API CODE v.Ctx.Request.Body--==:",&(v.Ctx.Request.Body))
 	// Unmarshal the request body
 	if err := json.NewDecoder(v.Ctx.Request.Body).Decode(&volume); err != nil {
 		errMsg := fmt.Sprintf("parse volume request body failed: %s", err.Error())
 		v.ErrorHandle(model.ErrorBadRequest, errMsg)
 		return
 	}
-
-	// get profile
-	var prf *model.ProfileSpec
-	var err error
-	if volume.ProfileId == "" {
-		log.Warning("Use default profile when user doesn't specify profile.")
-		prf, err = db.C.GetDefaultProfile(ctx)
-		if err != nil {
-			errMsg := fmt.Sprintf("get default profile failed: %s", err.Error())
-			v.ErrorHandle(model.ErrorBadRequest, errMsg)
-			return
-		}
-		// Assign the default profile id to volume so that users can know which
-		// profile is used for creating a volume.
-		volume.ProfileId = prf.Id
-	} else {
-		prf, err = db.C.GetProfile(ctx, volume.ProfileId)
-	}
-	if err != nil {
-		errMsg := fmt.Sprintf("get profile failed: %s", err.Error())
-		v.ErrorHandle(model.ErrorBadRequest, errMsg)
-		return
-	}
-
+    //fmt.Println("API CODE Volume...name--==:", volume.GetName())
+	log.Info("API CODE Volume...name--==:", volume.Name)
 	// NOTE:It will create a volume entry into the database and initialize its status
 	// as "creating". It will not wait for the real volume creation to complete
 	// and will return result immediately.
-	result, err := util.CreateVolumeDBEntry(ctx, &volume)
+	result, err := util.CreateCsiVolumeDBEntry(ctx, &volume)
 	if err != nil {
 		errMsg := fmt.Sprintf("create volume failed: %s", err.Error())
 		v.ErrorHandle(model.ErrorBadRequest, errMsg)
@@ -111,19 +92,8 @@ func (v *VolumePortal) CreateVolume() {
 	}
 
 	opt := &pb.CreateVolumeOpts{
-		Id:               result.Id,
-		Name:             result.Name,
-		Description:      result.Description,
-		Size:             result.Size,
-		AvailabilityZone: result.AvailabilityZone,
+		Name:             "CSI-TEST-NEW",
 		// TODO: ProfileId will be removed later.
-		ProfileId:         result.ProfileId,
-		Profile:           prf.ToJson(),
-		PoolId:            result.PoolId,
-		SnapshotId:        result.SnapshotId,
-		Metadata:          result.Metadata,
-		SnapshotFromCloud: result.SnapshotFromCloud,
-		Context:           ctx.ToJson(),
 	}
 	response, err := v.CtrClient.CreateVolume(context.Background(), opt)
 	if err != nil {
@@ -138,6 +108,98 @@ func (v *VolumePortal) CreateVolume() {
 
 	return
 }
+
+//func (v *VolumePortal) CreateVolume() {
+//	if !policy.Authorize(v.Ctx, "volume:create") {
+//		return
+//	}
+//	ctx := c.GetContext(v.Ctx)
+//	var volume = model.VolumeSpec{
+//		BaseModel: &model.BaseModel{},
+//	}
+//
+//	// Unmarshal the request body
+//	if err := json.NewDecoder(v.Ctx.Request.Body).Decode(&volume); err != nil {
+//		errMsg := fmt.Sprintf("parse volume request body failed: %s", err.Error())
+//		v.ErrorHandle(model.ErrorBadRequest, errMsg)
+//		return
+//	}
+//
+//	// get profile
+//	var prf *model.ProfileSpec
+//	var err error
+//	if volume.ProfileId == "" {
+//		log.Warning("Use default profile when user doesn't specify profile.")
+//		prf, err = db.C.GetDefaultProfile(ctx)
+//		if err != nil {
+//			errMsg := fmt.Sprintf("get default profile failed: %s", err.Error())
+//			v.ErrorHandle(model.ErrorBadRequest, errMsg)
+//			return
+//		}
+//		// Assign the default profile id to volume so that users can know which
+//		// profile is used for creating a volume.
+//		volume.ProfileId = prf.Id
+//	} else {
+//		prf, err = db.C.GetProfile(ctx, volume.ProfileId)
+//	}
+//	if err != nil {
+//		errMsg := fmt.Sprintf("get profile failed: %s", err.Error())
+//		v.ErrorHandle(model.ErrorBadRequest, errMsg)
+//		return
+//	}
+//
+//	// NOTE:It will create a volume entry into the database and initialize its status
+//	// as "creating". It will not wait for the real volume creation to complete
+//	// and will return result immediately.
+//	result, err := util.CreateVolumeDBEntry(ctx, &volume)
+//	if err != nil {
+//		errMsg := fmt.Sprintf("create volume failed: %s", err.Error())
+//		v.ErrorHandle(model.ErrorBadRequest, errMsg)
+//		return
+//	}
+//
+//	log.V(8).Infof("create volume DB entry success %+v", result)
+//
+//	// Marshal the result.
+//	body, _ := json.Marshal(result)
+//	v.SuccessHandle(StatusAccepted, body)
+//
+//	// NOTE:The real volume creation process.
+//	// Volume creation request is sent to the Dock. Dock will update volume status to "available"
+//	// after volume creation is completed.
+//	if err := v.CtrClient.Connect(CONF.OsdsLet.ApiEndpoint); err != nil {
+//		log.Error("when connecting controller client:", err)
+//		return
+//	}
+//
+//	opt := &pb.CreateVolumeOpts{
+//		Id:               result.Id,
+//		Name:             result.Name,
+//		Description:      result.Description,
+//		Size:             result.Size,
+//		AvailabilityZone: result.AvailabilityZone,
+//		// TODO: ProfileId will be removed later.
+//		ProfileId:         result.ProfileId,
+//		Profile:           prf.ToJson(),
+//		PoolId:            result.PoolId,
+//		SnapshotId:        result.SnapshotId,
+//		Metadata:          result.Metadata,
+//		SnapshotFromCloud: result.SnapshotFromCloud,
+//		Context:           ctx.ToJson(),
+//	}
+//	response, err := v.CtrClient.CreateVolume(context.Background(), opt)
+//	if err != nil {
+//		log.Error("create volume failed in controller service:", err)
+//		return
+//	}
+//	if errorMsg := response.GetError(); errorMsg != nil {
+//		log.Errorf("failed to create volume in controller, code: %v, message: %v",
+//			errorMsg.GetCode(), errorMsg.GetDescription())
+//		return
+//	}
+//
+//	return
+//}
 
 func (v *VolumePortal) ListVolumes() {
 	if !policy.Authorize(v.Ctx, "volume:list") {

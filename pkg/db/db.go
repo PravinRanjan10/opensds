@@ -148,6 +148,8 @@ type Client interface {
 
 	CreateVolume(ctx *c.Context, vol *model.VolumeSpec) (*model.VolumeSpec, error)
 
+	CreateCsiVolume(ctx *c.Context, vol *model.CsiVolumeSpec) (*model.CsiVolumeSpec, error)
+
 	GetVolume(ctx *c.Context, volID string) (*model.VolumeSpec, error)
 
 	ListVolumes(ctx *c.Context) ([]*model.VolumeSpec, error)

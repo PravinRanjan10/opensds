@@ -19,6 +19,95 @@ This module implements the common data structure.
 
 package model
 
+import "github.com/sodafoundation/api/pkg/model/csi"
+
+type VolumeContentSource_VolumeSource struct {
+	// Contains identity information for the existing source volume.
+	// This field is REQUIRED. Plugins reporting CLONE_VOLUME
+	// capability MUST support creating a volume from another volume.
+	VolumeId             string   `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
+}
+type VolumeContentSource_Volume struct {
+	Volume *VolumeContentSource_VolumeSource `protobuf:"bytes,2,opt,name=volume,proto3,oneof"`
+}
+
+type isVolumeContentSource_Type *VolumeContentSource_Volume
+
+type VolumeContentSource struct {
+	// Types that are valid to be assigned to Type:
+	//	*VolumeContentSource_Snapshot
+	//	*VolumeContentSource_Volume
+	Type isVolumeContentSource_Type `protobuf_oneof:"type"`
+}
+
+type VolumeCapability struct {
+	// Specifies what API the volume will be accessed using. One of the
+	// following fields MUST be specified.
+	//
+	// Types that are valid to be assigned to AccessType:
+	//	*VolumeCapability_Block
+	//	*VolumeCapability_Mount
+	AccessType isVolumeCapability_AccessType `protobuf_oneof:"access_type"`
+	// This is a REQUIRED field.
+	AccessMode  *VolumeCapability_AccessMode `protobuf:"bytes,3,opt,name=access_mode,json=accessMode,proto3" json:"access_mode,omitempty"`
+}
+
+type isVolumeCapability_AccessType interface {
+	isVolumeCapability_AccessType()
+}
+type VolumeCapability_AccessMode_Mode int32
+
+type VolumeCapability_AccessMode struct {
+	// This field is REQUIRED.
+	Mode VolumeCapability_AccessMode_Mode `protobuf:"varint,1,opt,name=mode,proto3,enum=csi.v1.VolumeCapability_AccessMode_Mode" json:"mode,omitempty"`
+}
+
+type CapacityRange struct {
+	// Volume MUST be at least this big. This field is OPTIONAL.
+	// A value of 0 is equal to an unspecified field value.
+	// The value of this field MUST NOT be negative.
+	RequiredBytes int64 `protobuf:"varint,1,opt,name=required_bytes,json=requiredBytes,proto3" json:"required_bytes,omitempty"`
+	// Volume MUST not be bigger than this. This field is OPTIONAL.
+	// A value of 0 is equal to an unspecified field value.
+	// The value of this field MUST NOT be negative.
+	LimitBytes           int64    `protobuf:"varint,2,opt,name=limit_bytes,json=limitBytes,proto3" json:"limit_bytes,omitempty"`
+}
+
+
+type CsiVolumeSpec1 struct {
+	*BaseModel
+	//// The name of the volume.
+	Name string `json:"name,omitempty"`
+	//// Default unit of volume Size is GB.
+	Size int64 `json:"size,omitempty"`
+	*csi.CreateVolumeRequest
+}
+
+type CsiVolumeSpec struct {
+	*BaseModel
+	//// The name of the volume.
+	//Name string `json:"name,omitempty"`
+	//// Default unit of volume Size is GB.
+	//Size int64 `json:"size,omitempty"`
+	//*csi.CreateVolumeRequest
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+
+	CapacityRange *CapacityRange `protobuf:"bytes,2,opt,name=capacity_range,json=capacityRange,proto3" json:"capacity_range,omitempty"`
+	// This field is REQUIRED.
+	//VolumeCapabilities []*VolumeCapability `protobuf:"bytes,3,rep,name=volume_capabilities,json=volumeCapabilities,proto3" json:"volume_capabilities,omitempty"`
+	// Plugin specific parameters passed in as opaque key-value pairs.
+	// This field is OPTIONAL. The Plugin is responsible for parsing and
+	// validating these parameters. COs will treat these as opaque.
+	Parameters map[string]string `protobuf:"bytes,4,rep,name=parameters,proto3" json:"parameters,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	// Secrets required by plugin to complete volume creation request.
+	// This field is OPTIONAL. Refer to the `Secrets Requirements`
+	// section on how to use this field.
+	Secrets map[string]string `protobuf:"bytes,5,rep,name=secrets,proto3" json:"secrets,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	// If specified, the new volume will be pre-populated with data from
+	// this source. This field is OPTIONAL.
+	VolumeContentSource *VolumeContentSource `protobuf:"bytes,6,opt,name=volume_content_source,json=volumeContentSource,proto3" json:"volume_content_source,omitempty"`
+}
+
 // VolumeSpec is an block device created by storage service, it can be attached
 // to physical machine or virtual machine instance.
 type VolumeSpec struct {
